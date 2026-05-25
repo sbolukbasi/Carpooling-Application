@@ -132,7 +132,7 @@ Passenger::Passenger(int id, string name, string email, string phoneNo, string p
 }
 
 // Destructor for Passenger class.
-Passenger::~Passenger() { cout << "Passenger object destroyed" << endl; }
+Passenger::~Passenger() {/*Passenger object destroyed*/ }
 
 // Simulates searching for a ride based on a destination string
 void Passenger::searchRide(string destination) { cout << "Searching: " << destination << endl; }
@@ -415,7 +415,7 @@ Booking::Booking(int id, Ride* r, Passenger* p, int seats) : bookingID(id), ride
  * Destructor for Booking class.
  * Outputs a message when the object life cycle ends.
  */
-Booking::~Booking() { cout << "Booking object destroyed" << endl; }
+Booking::~Booking() { /*Booking object destroyed*/ }
 
 /**
  * Validates and confirms the booking.
@@ -491,7 +491,7 @@ Payment::Payment(int id, float amount) {
 Payment::~Payment() {
     // DEALLOCATION: Avoiding memory leaks
     delete paymentAmount;
-    cout << "Payment dynamic memory freed." << endl;
+    /*Payment dynamic memory freed.*/
 }
 
 // Validates passenger balance and updates their financial state.
@@ -518,27 +518,6 @@ bool Payment::makePayment(Passenger& p) {
 void Payment::displayPaymentInfo() const{ cout << "Status: " << paymentStatus << " Amount: " << *paymentAmount << endl; }
 
 // ==========================================
-// main
-// ==========================================
-
-/*
-  Helper function to handle the payment and booking logic.
-*/
-void processRideTransaction(Booking& b, Payment& p, Passenger& pass) {
-	cout<<"\n------------- Payment --------------"<<endl;
-    cout << "------ Processing Transaction ------" << endl;
-    // Attempt to make payment: Deducts from passenger balance if sufficient
-    if (p.makePayment(pass)) {
-    	// If payment is successful, confirm the reservation and update ride seats
-        b.confirmBooking();
-    } else {
-    	// Error Handling for insufficient funds
-        cout << "Transaction cancelled, insufficient balance." << endl;
-    }
-    cout << "-----------------------------------" << endl;
-}
-
-// ==========================================
 // Carpooling Application Presentation Main
 // ==========================================
 
@@ -554,14 +533,16 @@ int main() {
     // One active ride and booking per session
     Ride* activeRide    = nullptr;
     Booking* activeBooking = nullptr;
-    double activeBookingCost = 0.0; // Rezervasyon iptalinde iade edilecek tutarı tutar
+    
+    float activeBookingCost = 0.0f; 
+    
+    string activeRideDestination = ""; 
 
     int nextUserID    = 1000;
     int nextRideID    = 1;
     int nextBookingID = 9000;
 
     bool appRunning = true;
-
     // ==========================================
     // MAIN LOOP: Sign In / Sign Up / Exit
     // ==========================================
@@ -625,16 +606,13 @@ int main() {
                 cin >> capacity; cin.ignore();
 
                 Vehicle newVehicle(vType, vModel, plate, capacity);
-
                 // Driver(id, name, email, password, phoneNo, vehicle)
                 Driver* newDriver = new Driver(nextUserID++, name, email, password, phone, newVehicle);
                 users[userCount]    = newDriver;
                 userType[userCount] = 0;
                 userCount++;
 
-                cout << "\nDriver account created successfully!"
-                     << endl;
-
+                cout << "\nDriver account created successfully!" << endl;
             } else if (typeChoice == 2) {
                 // ---------- Passenger Sign Up ----------
                 cout << "\n--- Passenger Registration ---" << endl;
@@ -655,12 +633,9 @@ int main() {
                 userType[userCount] = 1;
                 userCount++;
 
-                cout << "\nPassenger account created successfully!"
-                     << endl;
-
+                cout << "\nPassenger account created successfully!" << endl;
             } else {
-                cout << "Invalid selection. Returning to main menu."
-                     << endl;
+                cout << "Invalid selection. Returning to main menu." << endl;
             }
 
         }
@@ -671,24 +646,19 @@ int main() {
         else if (authChoice == 1) {
 
             string enteredEmail, enteredPassword;
-            int    attempts    = 0;
             bool   loggedIn    = false;
             int    loggedIndex = -1;
 
-            // Allow up to 3 login attempts
-            while (attempts < 3 && !loggedIn) {
+            while (!loggedIn) {
                 cout << "\n--- Sign In ---" << endl;
                 cout << "Email    : "; getline(cin, enteredEmail);
                 cout << "Password : "; getline(cin, enteredPassword);
-                // Run login() for every registered user and store each result.
-                // This prevents a false error message from printing when
-                // the credentials belong to a later user in the array.
+                
                 bool loginResults[MAX_USERS];
                 for (int i = 0; i < userCount; i++) {
                     loginResults[i] = users[i]->login(enteredEmail, enteredPassword);
                 }
 
-                // Scan the results array to find which user matched.
                 for (int i = 0; i < userCount; i++) {
                     if (loginResults[i]) {
                         loggedIn    = true;
@@ -696,26 +666,7 @@ int main() {
                         break;
                     }
                 }
-
-                if (loggedIn) {
-                    // A match was found: print the success message here instead of inside login()
-                    cout << "Successful: You have logged in to the system." << endl;
-                } else {
-                    // No user matched: show the error message once
-                    cout << "Error: Email or password is incorrect!"
-                         << endl;
-                    attempts++;
-                    if (attempts < 3) {
-                        cout << "Please try again. (" << (3 - attempts) << " attempt(s) left)" << endl;
-                    }
-                }
-            }
-
-            // Return to main menu after 3 failed attempts
-            if (!loggedIn) {
-                cout << "\nToo many failed attempts. Returning to main menu."
-                     << endl;
-                continue;
+                
             }
 
             // ==========================================
@@ -734,14 +685,16 @@ int main() {
                     cout << "========================================" << endl;
                     cout << "  1. Offer Ride" << endl;
                     cout << "  2. View Upcoming Ride" << endl;
-                    cout << "  3. My Profile" << endl;
-                    cout << "  4. Logout" << endl;
+                    cout << "  3. Delete Offered Ride" << endl; 
+                    cout << "  4. My Profile" << endl;
+                    cout << "  5. Logout" << endl;
                     cout << "----------------------------------------" << endl;
                     cout << "Select an option: ";
 
                     int driverChoice;
                     cin >> driverChoice;
                     cin.ignore();
+                    
                     if (driverChoice == 1) {
                         // ---------- Offer Ride ----------
                         cout << "\n--- Offer a Ride ---" << endl;
@@ -752,45 +705,56 @@ int main() {
                         cout << "Departure   : ";
                         getline(cin, departure);
                         cout << "Destination : "; getline(cin, destination);
+                        
+                        activeRideDestination = destination; 
+                        
                         cout << "Date        : ";
                         getline(cin, date);
                         cout << "Time        : "; getline(cin, time);
                         cout << "Seats       : "; cin >> seats;  cin.ignore();
                         cout << "Price (TL)  : "; cin >> price;  cin.ignore();
-                        // Free previous active ride if it exists
+                        
                         if (activeRide != nullptr) {
                             delete activeRide;
                             activeRide = nullptr;
                         }
 
-                        // offerRide returns by value; copy to heap for persistence
                         Ride tempRide = currentDriver->offerRide(nextRideID++, departure, destination, date, time, seats, price);
                         activeRide = new Ride(tempRide);
 
                         cout << "\nRide created successfully!" << endl;
-
+                        
                     } else if (driverChoice == 2) {
                         // ---------- View Upcoming Ride ----------
                         if (activeRide != nullptr) {
                             activeRide->showRideDetails();
                         } else {
-                            cout << "\nNo active ride found."
-                                 << endl;
+                            cout << "\nNo active ride found." << endl;
                         }
 
                     } else if (driverChoice == 3) {
+                        // ---------- Delete Offered Ride ----------
+                        if (activeRide != nullptr) {
+                            delete activeRide;
+                            activeRide = nullptr;
+                            activeRideDestination = "";
+                            cout << "\nOffered ride deleted successfully!" << endl;
+                        } else {
+                            cout << "\nNo active ride found to delete." << endl;
+                        }
+
+                    } else if (driverChoice == 4) {
                         // ---------- My Profile ----------
                         cout << endl;
                         currentDriver->displayUserInfo();
 
-                    } else if (driverChoice == 4) {
+                    } else if (driverChoice == 5) {
                         // ---------- Logout ----------
                         currentDriver->logout();
                         driverSession = false;
 
                     } else {
-                        cout << "Invalid selection. Please try again."
-                             << endl;
+                        cout << "Invalid selection. Please try again." << endl;
                     }
                 }
 
@@ -803,6 +767,7 @@ int main() {
 
                 Passenger* currentPassenger = static_cast<Passenger*>(users[loggedIndex]);
                 bool       passSession      = true;
+                
                 while (passSession) {
 
                     cout << "\n========================================" << endl;
@@ -827,56 +792,63 @@ int main() {
                         string destination;
                         cout << "Enter destination: "; getline(cin, destination);
 
-                        // searchRide provides destination search feedback
                         currentPassenger->searchRide(destination);
-                        if (activeRide == nullptr) {
-                            cout << "No rides available for this destination at the moment."
-                                 << endl;
+                        
+                        bool matchFound = false;
+                        if (activeRide != nullptr) {
+                            string rideDest = activeRideDestination;
+                            string searchDest = destination;
+                            
+                            for(int i = 0; i < (int)rideDest.length(); i++) {
+                                if(rideDest[i] >= 'A' && rideDest[i] <= 'Z') rideDest[i] += 32;
+                            }
+                            for(int i = 0; i < (int)searchDest.length(); i++) {
+                                if(searchDest[i] >= 'A' && searchDest[i] <= 'Z') searchDest[i] += 32;
+                            }
+
+                            if (rideDest == searchDest) {
+                                matchFound = true;
+                            }
+                        }
+
+                        if (!matchFound) {
+                            cout << "\nUnfortunately, there are currently no suitable route available for the '" << destination << "' route." << endl;
                         } else {
-                            // Display the details of the available ride
                             activeRide->showRideDetails();
-                            // First ask the passenger whether they want to accept this ride
+                            
                             cout << "\nWould you like to accept this ride? (Yes/No): ";
                             string acceptChoice;
                             getline(cin, acceptChoice);
 
                             if (acceptChoice != "Yes" && acceptChoice != "yes" && acceptChoice != "YES") {
-                                // Passenger declined: show cancellation message and return to menu
-                                cout << "Booking cancelled."
-                                     << endl;
+                                cout << "Booking cancelled." << endl;
                             } else {
-                                // Passenger accepted: ask how many seats they need
                                 cout << "How many seats would you like to book? ";
                                 int seats;
                                 cin >> seats; cin.ignore();
 
                                 if (seats <= 0) {
-                                    cout << "Booking cancelled."
-                                         << endl;
+                                    cout << "Booking cancelled." << endl;
                                 } else {
-                                    // Free the previous active booking from heap memory if it exists
                                     if (activeBooking != nullptr) {
                                         delete activeBooking;
                                         activeBooking = nullptr;
-                                        activeBookingCost = 0.0;
+                                        activeBookingCost = 0.0f;
                                     }
 
-                                    // Create a new Booking object on the heap
                                     activeBooking = new Booking(nextBookingID++, activeRide, currentPassenger, seats);
                                     
-                                    // Calculate total cost
-                                    double totalCost = activeRide->getRidePrice() * seats;
+                                    float totalCost = (float)(activeRide->getRidePrice() * seats);
                                     Payment ridePayment(nextBookingID, totalCost);
                                     
-                                    // INLINE TRANSACTION PROCESSING
                                     cout<<"\n------------- Payment --------------"<<endl;
                                     cout << "------ Processing Transaction ------" << endl;
                                     if (ridePayment.makePayment(*currentPassenger)) {
                                         activeBooking->confirmBooking();
-                                        activeBookingCost = totalCost; // Tutarı iptal iadesi için kaydet
+                                        activeBookingCost = totalCost; 
                                     } else {
                                         cout << "Transaction cancelled, insufficient balance." << endl;
-                                        activeBookingCost = 0.0;
+                                        activeBookingCost = 0.0f;
                                     }
                                     cout << "-----------------------------------" << endl;
                                 }
@@ -884,15 +856,19 @@ int main() {
                         }
 
                     } else if (passChoice == 2) {
-                   
                         // ---------- View Active Booking ----------
-                        // Show basic details of the current active booking if one exists
                         if (activeBooking == nullptr) {
-                           
                             cout << "\nNo active booking found." << endl;
                         } else {
-                            cout << "\n--- Active Booking ---" << endl;
+                            cout << "\n======== ACTIVE BOOKING SUMMARY ========" << endl;
+                            
                             cout << activeBooking->getBookingDetails() << endl;
+                            cout << "Total Paid : " << activeBookingCost << " TL" << endl;
+                            
+                            if (activeRide != nullptr) {
+                                activeRide->showRideDetails();
+                            }
+                            cout << "========================================" << endl;
                         }
 
                     } else if (passChoice == 3) {
@@ -901,15 +877,13 @@ int main() {
                             cout << "\nNo active booking to cancel." << endl;
                         } else {
                             activeBooking->cancelBooking();
-                            
-                            // Ücret iadesini gerçekleştir
                             currentPassenger->setBalance(currentPassenger->getBalance() + activeBookingCost);
                             cout << "\nRefund successful! " << activeBookingCost << " TL has been credited back to your wallet." << endl;
                             cout << "New Balance: " << currentPassenger->getBalance() << " TL" << endl;
 
                             delete activeBooking;
                             activeBooking = nullptr;
-                            activeBookingCost = 0.0; // Sıfırla
+                            activeBookingCost = 0.0f;
                         }
 
                     } else if (passChoice == 4) {
@@ -923,8 +897,7 @@ int main() {
                             currentPassenger->setBalance(currentPassenger->getBalance() + amount);
                             cout << "Balance updated. New Balance: " << currentPassenger->getBalance() << " TL" << endl;
                         } else {
-                            cout << "Invalid amount."
-                                 << endl;
+                            cout << "Invalid amount." << endl;
                         }
 
                     } else if (passChoice == 5) {
@@ -938,20 +911,17 @@ int main() {
                         passSession = false;
 
                     } else {
-                        cout << "Invalid selection. Please try again."
-                             << endl;
+                        cout << "Invalid selection. Please try again." << endl;
                     }
                 }
             }
 
         } else {
-            cout << "Invalid selection. Please try again."
-                 << endl;
+            cout << "Invalid selection. Please try again." << endl;
         }
 
-    } // end main loop
+    } 
 
-    // Free heap memory before exit
     if (activeRide    != nullptr) delete activeRide;
     if (activeBooking != nullptr) delete activeBooking;
 
