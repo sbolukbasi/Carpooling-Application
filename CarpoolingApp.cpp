@@ -10,7 +10,7 @@ using namespace std;
 // User
 // ==========================================
 
-// BASE CLASS: User is a general template. Passenger and Driver provide specific details.
+// BASE CLASS: User is a general template. Passenger and Driver inherit the specific details.
 class User {
 private:
     // ENCAPSULATION: Private attributes restricted to class scope
